@@ -10,6 +10,8 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executors;
 
 public class SillyClassNamePleaseChange extends Application
 {
@@ -83,49 +85,46 @@ public class SillyClassNamePleaseChange extends Application
 
     }
     
-    // ------------------------- //
-    // - BUTTON: Cross Compare - //
-    // ------------------------- //
+    // ----------- //
+    // - Compare - //
+    // ----------- //
 
     private void crossCompare(Stage stage)
     {
+
         DirectoryChooser dc = new DirectoryChooser();
         dc.setInitialDirectory(new File("."));
-        dc.setTitle("Choose directory");
-        File directory = dc.showDialog(stage);
-        
-        System.out.println("Comparing files within " + directory + "...");
-        
-        // Extremely fake way of demonstrating how to use the progress bar (noting that it can 
-        // actually only be set to one value, from 0-1, at a time.)
-        try
+        dc.setTitle("Choose directory to compare files in.");
+        File selectedDirectory = dc.showDialog(stage);
+
+        List<File> allFiles = getAllFilesInDirectory( selectedDirectory );
+
+        for ( File tempFile : allFiles )
+            System.out.println( tempFile );
+    }
+
+    private List<File> getAllFilesInDirectory( File inDirectory )
+    {
+        // Subdirectories' files added after current directory finished.
+        List<File> subDirectoriesToProcess = new ArrayList<File>();
+
+        // Go through current directory
+        List<File> outList = new ArrayList<File>();
+        for ( File tempFile : inDirectory.listFiles() )
         {
-            Thread.sleep(1000);
-            progressBar.setProgress(0.25);
-            Thread.sleep(1000);
-            progressBar.setProgress(0.5);
-            Thread.sleep(1000);
-            progressBar.setProgress(0.6);
-            Thread.sleep(1000);
-            progressBar.setProgress(0.85);
-            Thread.sleep(1000);
-            progressBar.setProgress(1.0);
-        }
-        catch( InterruptedException e )
-        {
-            System.out.println( e.toString() );
+            if ( !tempFile.isDirectory() )
+                outList.add( tempFile );
+            else
+                subDirectoriesToProcess.add( tempFile );
         }
 
-        // Extremely fake way of demonstrating how to update the table (noting that this shouldn't
-        // just happen once at the end, but progressively as each result is obtained.)
-        List<ComparisonResult> newResults = new ArrayList<>();
-        newResults.add(new ComparisonResult("Example File 1", "Example File 2", 0.75));
-        newResults.add(new ComparisonResult("Example File 1", "Example File 3", 0.31));
-        newResults.add(new ComparisonResult("Example File 2", "Example File 3", 0.45));
-        
-        resultTable.getItems().setAll(newResults);        
-        
-        // progressBar.setProgress(0.0); // Reset progress bar after successful comparison?
+        // Go through subdirectories
+        for ( File tempSubdirectory : subDirectoriesToProcess )
+        {
+            outList.addAll( getAllFilesInDirectory(tempSubdirectory) );
+        }
+
+        return outList;
     }
 
     // ---------------- //
