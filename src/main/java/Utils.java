@@ -21,7 +21,7 @@ public class Utils
             while ( (tempLine = fileReader.readLine()) != null )
                 fileString += tempLine;
             
-                fileReader.close();
+            fileReader.close();
         }
         catch( IOException e )
         {
@@ -42,16 +42,14 @@ public class Utils
         for ( File tempFile : inDirectory.listFiles() )
         {
 
-            // IF is text file and non-empty
-            if ( isTextFile(tempFile) && tempFile.length() > 0 )
-            {
-                // IF file, process now
-                if ( !tempFile.isDirectory() )
-                    outList.add( tempFile );
-                // ELSE IF subdirectory, process later
-                else
-                    subDirectoriesToProcess.add( tempFile );
-            }
+            // IF not subfolder, is non-empty and is text file, process now
+            if ( !tempFile.isDirectory() && tempFile.length() > 0 && isTextFile(tempFile) )
+                outList.add( tempFile );
+            // ELSE IF subdirectory, process later
+            else if ( tempFile.isDirectory() )
+                subDirectoriesToProcess.add( tempFile );
+            // ELSE ignore file
+
         }
 
         // Go through subdirectories
