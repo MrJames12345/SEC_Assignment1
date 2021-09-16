@@ -16,8 +16,6 @@ public class FilesComparer implements Runnable
     List<File> listOfFiles;
     // Injected list of completed comparisons (initially empty)
     BlockingQueue<ComparisonResult> listOfComparisons;
-    // Threading pool for distributing tasks
-    ThreadPoolExecutor threadingPool;
     Object mutex;
 
     // --------------- //
@@ -28,7 +26,6 @@ public class FilesComparer implements Runnable
     {
         listOfFiles = inListOfFiles;
         listOfComparisons = inListOfComparisons;
-        threadingPool = (ThreadPoolExecutor) Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
     }
 
     // ----------------- //

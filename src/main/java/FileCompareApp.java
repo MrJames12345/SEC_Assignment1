@@ -104,7 +104,7 @@ public class FileCompareApp extends Application
 
         // Choose directory
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File("C:\\Users\\James\\Desktop\\TEST"));
+        dc.setInitialDirectory(new File("."));
         dc.setTitle("Choose directory to compare files in.");
         selectedDirectory = dc.showDialog(stage);
 
