@@ -1,4 +1,4 @@
-package sillypackagenamepleasechange;
+package filecompare;
 
 public class ComparisonResult
 {
