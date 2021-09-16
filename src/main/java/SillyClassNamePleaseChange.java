@@ -93,17 +93,20 @@ public class SillyClassNamePleaseChange extends Application
     {
 
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File("."));
+        dc.setInitialDirectory(new File("C:\\Users\\James\\Desktop\\TEST"));
         dc.setTitle("Choose directory to compare files in.");
         File selectedDirectory = dc.showDialog(stage);
 
-        List<File> allFiles = getAllFilesInDirectory( selectedDirectory );
+        List<File> allFiles = getAllNonEmptyTextFiles( selectedDirectory );
 
         for ( File tempFile : allFiles )
-            System.out.println( tempFile );
+        {
+            // <>WWW<>
+        }
     }
 
-    private List<File> getAllFilesInDirectory( File inDirectory )
+    // Get all non-empty text files
+    private List<File> getAllNonEmptyTextFiles( File inDirectory )
     {
         // Subdirectories' files added after current directory finished.
         List<File> subDirectoriesToProcess = new ArrayList<File>();
@@ -112,19 +115,36 @@ public class SillyClassNamePleaseChange extends Application
         List<File> outList = new ArrayList<File>();
         for ( File tempFile : inDirectory.listFiles() )
         {
-            if ( !tempFile.isDirectory() )
-                outList.add( tempFile );
-            else
-                subDirectoriesToProcess.add( tempFile );
+
+            // IF is text file and non-empty
+            if ( isTextFile(tempFile) && tempFile.length() > 0 )
+            {
+                // IF file, process now
+                if ( !tempFile.isDirectory() )
+                    outList.add( tempFile );
+                // ELSE IF subdirectory, process later
+                else
+                    subDirectoriesToProcess.add( tempFile );
+            }
         }
 
         // Go through subdirectories
         for ( File tempSubdirectory : subDirectoriesToProcess )
         {
-            outList.addAll( getAllFilesInDirectory(tempSubdirectory) );
+            outList.addAll( getAllNonEmptyTextFiles(tempSubdirectory) );
         }
 
         return outList;
+    }
+
+    // Check if file is text file
+    private boolean isTextFile( File inFile )
+    {
+        boolean check = false;
+        String extension = inFile.toString().substring( inFile.toString().indexOf(".") );
+        if ( extension.equals(".txt") || extension.equals(".md") || extension.equals(".java") || extension.equals(".cs"))
+            check = true;
+        return check;
     }
 
     // ---------------- //
