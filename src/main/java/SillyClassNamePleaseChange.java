@@ -8,10 +8,10 @@ import javafx.scene.Scene;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.Executors;
+import java.io.*;
 
 public class SillyClassNamePleaseChange extends Application
 {
@@ -75,7 +75,7 @@ public class SillyClassNamePleaseChange extends Application
         // - Functions - //
         
         // Toolbar buttons
-        compareButton.setOnAction(event -> crossCompare(stage));
+        compareButton.setOnAction(event -> fullCompareProcess(stage));
         stopButton.setOnAction(event -> stopComparison());
         
         // How to extract ComparisonResult and put into the three columns
@@ -89,62 +89,95 @@ public class SillyClassNamePleaseChange extends Application
     // - Compare - //
     // ----------- //
 
-    private void crossCompare(Stage stage)
+    private void fullCompareProcess(Stage stage)
     {
 
+        List<ComparisonResult> listOfComparisons = new ArrayList<ComparisonResult>();
+
+        // Choose directory
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File("C:\\Users\\James\\Desktop\\TEST"));
+        dc.setInitialDirectory(new File("."));
         dc.setTitle("Choose directory to compare files in.");
         File selectedDirectory = dc.showDialog(stage);
 
-        List<File> allFiles = getAllNonEmptyTextFiles( selectedDirectory );
+        // Get all non-empty text files
+        List<File> allFiles = Utils.getAllNonEmptyTextFiles( selectedDirectory );
 
-        for ( File tempFile : allFiles )
+        // Compare all files
+        for ( int i = 0; i < allFiles.size(); i++ )
         {
-            // <>WWW<>
-        }
-    }
-
-    // Get all non-empty text files
-    private List<File> getAllNonEmptyTextFiles( File inDirectory )
-    {
-        // Subdirectories' files added after current directory finished.
-        List<File> subDirectoriesToProcess = new ArrayList<File>();
-
-        // Go through current directory
-        List<File> outList = new ArrayList<File>();
-        for ( File tempFile : inDirectory.listFiles() )
-        {
-
-            // IF is text file and non-empty
-            if ( isTextFile(tempFile) && tempFile.length() > 0 )
+            for ( int j = i + 1; j < allFiles.size(); j++ )
             {
-                // IF file, process now
-                if ( !tempFile.isDirectory() )
-                    outList.add( tempFile );
-                // ELSE IF subdirectory, process later
-                else
-                    subDirectoriesToProcess.add( tempFile );
+                listOfComparisons.add( compareFiles( allFiles.get(i), allFiles.get(j) ) );
             }
         }
 
-        // Go through subdirectories
-        for ( File tempSubdirectory : subDirectoriesToProcess )
+        for ( ComparisonResult tempComparison : listOfComparisons )
         {
-            outList.addAll( getAllNonEmptyTextFiles(tempSubdirectory) );
+            System.out.println( tempComparison.getFile1() );
+            System.out.println( tempComparison.getFile2() );
+            System.out.println( tempComparison.getSimilarity() );
         }
-
-        return outList;
     }
 
-    // Check if file is text file
-    private boolean isTextFile( File inFile )
+    // Compare two files
+    private ComparisonResult compareFiles( File inFile1, File inFile2 )
     {
-        boolean check = false;
-        String extension = inFile.toString().substring( inFile.toString().indexOf(".") );
-        if ( extension.equals(".txt") || extension.equals(".md") || extension.equals(".java") || extension.equals(".cs"))
-            check = true;
-        return check;
+        double similarity = 0;
+        char[] file1Chars = Utils.textFileToCharArray( inFile1 );
+        char[] file2Chars = Utils.textFileToCharArray( inFile2 );
+
+        int[][] subsolutions =  new int[file1Chars.length + 1][file2Chars.length + 1];
+        boolean[][] directionsLeft = new boolean[file1Chars.length + 1][file2Chars.length + 1];
+        
+        // Fill first row and first column of subsolutions with zeros
+        for ( int i = 0; i < file1Chars.length + 1; i++ )
+            subsolutions[i][0] = 0;
+        for ( int i = 0; i < file2Chars.length + 1; i++ )
+            subsolutions[0][i] = 0;
+
+        for ( int i = 1; i <= file1Chars.length; i++ )
+        {
+            for ( int j = 1; j <= file2Chars.length; j++ )
+            {
+                if ( file1Chars[i - 1] == file2Chars[j - 1] )
+                {
+                    subsolutions[i][j] = subsolutions[i - 1][j - 1] + 1;
+                }
+                else if ( subsolutions[i - 1][j] > subsolutions[i][j - 1] )
+                {
+                    subsolutions[i][j] = subsolutions[i - 1][j];
+                    directionsLeft[i][j] = true;
+                }
+                else
+                {
+                    subsolutions[i][j] = subsolutions[i][j - 1];
+                    directionsLeft[i][j] = false;
+                }
+            }
+        }
+
+        int matches = 0;
+        int i = file1Chars.length;
+        int j = file2Chars.length;
+
+        while ( i > 0 && j > 0 )
+        {
+            if ( file1Chars[i - 1] == file2Chars[j - 1] )
+            {
+                matches += 1;
+                i -= 1;
+                j -= 1;
+            }
+            else if ( directionsLeft[i][j] )
+                i -= 1;
+            else        
+                j -= 1;
+        }
+
+        similarity =  (double)(matches * 2) / (double)(file1Chars.length + file2Chars.length);
+
+        return new ComparisonResult( inFile1.toString(), inFile2.toString(), similarity );
     }
 
     // ---------------- //
